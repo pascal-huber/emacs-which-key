@@ -763,10 +763,11 @@ problems at github.")
 (defvar which-key--god-mode-key-string nil
   "Holds key string to use for god-mode support.")
 
-(defun which-key--god-mode-lookup-command-advice (orig-fun arg1 &rest args)
-  (setq which-key--god-mode-key-string arg1)
+(defun which-key--god-mode-lookup-command-advice (orig-fn &rest args)
+  "Advice function for `god-mode-lookup-command'."
+  (setq which-key--god-mode-key-string (car args))
   (unwind-protect
-      (apply orig-fun arg1 args)
+      (apply orig-fn args)
     (when (bound-and-true-p which-key-mode)
       (which-key--hide-popup))))
 
@@ -777,11 +778,11 @@ now. Please report any problems at github. If DISABLE is non-nil
 disable support."
   (interactive "P")
   (setq which-key--god-mode-support-enabled (null disable))
-  (if disable
-      (advice-remove 'god-mode-lookup-command
-                     #'which-key--god-mode-lookup-command-advice)
-    (advice-add 'god-mode-lookup-command :around
-                #'which-key--god-mode-lookup-command-advice)))
+  (cond (which-key--god-mode-support-enabled
+         (advice-add 'god-mode-lookup-command
+                     :around #'which-key--god-mode-lookup-command-advice))
+        (t (advice-remove 'god-mode-lookup-command
+                          #'which-key--god-mode-lookup-command-advice))))
 
 ;;; Mode
 
